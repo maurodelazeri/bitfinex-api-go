@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/maurodelazeri/bitfinex-api-go/v2"
 )
 
 // API for end-users to interact with Bitfinex.
