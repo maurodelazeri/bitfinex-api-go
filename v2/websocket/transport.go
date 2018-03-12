@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -50,12 +49,10 @@ func (w *ws) Connect() error {
 
 	d.TLSClientConfig = &tls.Config{InsecureSkipVerify: w.TLSSkipVerify}
 
-	log.Printf("connecting ws to %s", w.BaseURL)
-	ws, resp, err := d.Dial(w.BaseURL, nil)
+	ws, _, err := d.Dial(w.BaseURL, nil)
 	if err != nil {
 		close(w.downstream) // signal to parent connection failure thru listen channel
 		if err == websocket.ErrBadHandshake {
-			log.Printf("bad handshake: status code %d", resp.StatusCode)
 		}
 		return err
 	}
@@ -76,7 +73,6 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("ws->srv: %s", string(bs))
 
 	select {
 	case <-ctx.Done():
@@ -116,8 +112,7 @@ func (w *ws) listenWs() {
 
 		_, msg, err := w.ws.ReadMessage()
 		if err != nil {
-			if cl, ok := err.(*websocket.CloseError); ok {
-				log.Printf("close error code: %d", cl.Code)
+			if _, ok := err.(*websocket.CloseError); ok {
 			}
 			// a read during normal shutdown results in an OpError: op on closed connection
 			if _, ok := err.(*net.OpError); ok {
@@ -128,7 +123,6 @@ func (w *ws) listenWs() {
 			w.cleanup(err)
 			return
 		}
-		log.Printf("srv->ws: %s", string(msg))
 		w.downstream <- msg
 	}
 }
@@ -152,7 +146,6 @@ func (w *ws) Close() {
 	w.userShutdown = true
 	if w.ws != nil {
 		if err := w.ws.Close(); err != nil { // will trigger cleanup()
-			log.Printf("[INFO]: error closing websocket: %s", err)
 		}
 		w.ws = nil
 	}

@@ -273,7 +273,7 @@ func (c *Client) dumpParams() {
 
 // Connect to the Bitfinex API, this should only be called once.
 func (c *Client) Connect() error {
-	c.dumpParams()
+	//c.dumpParams()
 	c.reset()
 	return c.connect()
 }
